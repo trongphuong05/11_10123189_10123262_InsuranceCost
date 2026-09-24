@@ -4,16 +4,14 @@ Dự đoán **chi phí bảo hiểm y tế (`charges`)** từ `age, sex, bmi, ch
 
 Repo tuân thủ cấu trúc boilerplate của học phần _Học máy cơ bản (221180)_: `app/` · `ai-models/` · `docs/` · `docker-compose.yml` · `.env.example`.
 
-> Đổi tên thư mục theo mẫu lớp trước khi nộp: `<Số nhóm>_<MSSV1>_<MSSV2>_InsuranceCost`.
-
 ---
 
 ## 1. Thành viên
 
-| Họ tên                  | MSSV | Phần việc                                                                                                                                                  |
-| ----------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Đào Văn Khiêm**       |      | **ML nền tảng + AI Service**: EDA, Preprocessing, Linear Regression, Decision Tree, AI Service, 1/2 báo cáo (Dữ liệu + EDA + Model)                        |
-| **Nguyễn Trọng Phương** |      | **Model nâng cao + Web App**: Random Forest, SVR, Backend, Frontend, Docker + triển khai, 1/2 báo cáo (Kiến trúc hệ thống + Triển khai + Kết quả kiểm thử) |
+| Họ tên                  | MSSV     | Phần việc                                                                                                                                                  |
+| ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Đào Văn Khiêm**       | 10123189 | **ML nền tảng + AI Service**: EDA, Preprocessing, Linear Regression, Decision Tree, AI Service, 1/2 báo cáo (Dữ liệu + EDA + Model)                        |
+| **Nguyễn Trọng Phương** | 10123262 | **Model nâng cao + Web App**: Random Forest, SVR, Backend, Frontend, Docker + triển khai, 1/2 báo cáo (Kiến trúc hệ thống + Triển khai + Kết quả kiểm thử) |
 
 ### Làm chung
 
