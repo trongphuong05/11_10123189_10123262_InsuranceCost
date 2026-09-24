@@ -1,0 +1,21 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+*.egg-info/
+venv/
+.venv/
+env/
+*.log
+.mypy_cache/
+.ruff_cache/
+mongo_data/
+app/backend/.pytest_cache/
+ai-models/service/.pytest_cache/
+
+# secrets
+kaggle.json
+**/secrets*
