@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Insurance AI • Dự đoán chi phí bảo hiểm</title>
+    <script src="/config.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
+
+      :root {
+        --bg: #07111f;
+        --panel: rgba(15, 27, 45, 0.78);
+        --panel2: rgba(20, 35, 56, 0.82);
+        --line: rgba(148, 163, 184, 0.15);
+        --text: #edf6ff;
+        --muted: #8ea4ba;
+        --cyan: #38d9ff;
+        --blue: #5b7cff;
+        --green: #35e0a1;
+        --danger: #ff6b7a;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: Inter, system-ui, sans-serif;
+        background:
+          radial-gradient(
+            circle at 8% 0%,
+            rgba(56, 217, 255, 0.16),
+            transparent 32rem
+          ),
+          radial-gradient(
+            circle at 92% 8%,
+            rgba(91, 124, 255, 0.18),
+            transparent 34rem
+          ),
+          linear-gradient(145deg, #06101c, #0a1424 48%, #07101d);
+      }
+      body:before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.22;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.025) 1px,
+            transparent 1px
+          );
+        background-size: 42px 42px;
+      }
+      .wrap {
+        width: min(1220px, calc(100% - 32px));
+        margin: auto;
+        padding: 34px 0 70px;
+        position: relative;
+      }
+      header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 26px;
+      }
+      .brand {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+      }
+      .logo {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        font-size: 23px;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--cyan), var(--blue));
+        box-shadow: 0 10px 35px rgba(56, 217, 255, 0.22);
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--cyan);
+        font-weight: 800;
+      }
+      h1,
+      h2 {
+        font-family: "Plus Jakarta Sans", Inter, sans-serif;
+      }
+      h1 {
+        font-size: clamp(28px, 4vw, 44px);
+        line-height: 1.05;
+        margin: 7px 0 9px;
+        letter-spacing: -0.035em;
+      }
+      .sub {
+        margin: 0;
+        color: var(--muted);
+        max-width: 680px;
+        line-height: 1.65;
+        font-size: 14px;
+      }
+      .health {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .pill {
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        backdrop-filter: blur(10px);
+      }
+      .pill.ok {
+        color: #8ff5cf;
+        border-color: rgba(53, 224, 161, 0.3);
+        background: rgba(53, 224, 161, 0.08);
+      }
+      .pill.bad {
+        color: #ff9aa6;
+        border-color: rgba(255, 107, 122, 0.3);
+        background: rgba(255, 107, 122, 0.08);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+        gap: 18px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        background: linear-gradient(
+          145deg,
+          rgba(18, 32, 52, 0.88),
+          rgba(10, 21, 35, 0.82)
+        );
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .card h2 {
+        font-size: 17px;
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+      .card-tag {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        padding: 6px 9px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .field label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #b5c5d5;
+        margin: 0 0 7px;
+      }
+      .hint {
+        display: block;
+        font-size: 10px;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
+        color: #647b91;
+        margin-top: 3px;
+      }
+      input,
+      select {
+        width: 100%;
+        height: 46px;
+        padding: 0 13px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 12px;
+        background: rgba(3, 12, 23, 0.65);
+        color: var(--text);
+        outline: none;
+        font: 500 13px Inter;
+        transition: 0.2s;
+      }
+      input:focus,
+      select:focus {
+        border-color: rgba(56, 217, 255, 0.65);
+        box-shadow: 0 0 0 4px rgba(56, 217, 255, 0.08);
+      }
+      button {
+        font-family: Inter;
+        transition: 0.2s;
+      }
+      button.primary {
+        margin-top: 17px;
+        width: 100%;
+        height: 50px;
+        border: 0;
+        border-radius: 13px;
+        color: #03101a;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        background: linear-gradient(100deg, var(--cyan), #73e7ff 45%, #8ba1ff);
+        box-shadow: 0 12px 30px rgba(56, 217, 255, 0.18);
+      }
+      button.primary:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+      }
+      button.primary:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .error {
+        min-height: 20px;
+        margin-top: 9px;
+        color: #ff9aa6;
+        font-size: 12px;
+      }
+      .result-box {
+        min-height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .result-empty {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+        padding: 24px;
+        border: 1px dashed var(--line);
+        border-radius: 16px;
+        text-align: center;
+      }
+      .result-value {
+        font-family: "Plus Jakarta Sans", Inter, sans-serif;
+        font-size: clamp(34px, 5vw, 50px);
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        margin: 7px 0 8px;
+        background: linear-gradient(90deg, #fff, var(--cyan));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.7;
+        margin: 4px 0;
+      }
+      .rid {
+        font-family: ui-monospace, monospace;
+        color: #a9c2d9;
+      }
+      .divider {
+        height: 1px;
+        background: var(--line);
+        margin: 20px 0;
+      }
+      .model-label {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--cyan);
+        font-weight: 800;
+      }
+      .model-blurb {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+      .model-blurb strong {
+        color: #fff;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin: 20px 0 12px;
+        padding: 5px;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        width: max-content;
+      }
+      .tabs button {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        padding: 9px 15px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .tabs button.active {
+        background: rgba(56, 217, 255, 0.12);
+        color: #dffaff;
+        box-shadow: inset 0 0 0 1px rgba(56, 217, 255, 0.12);
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 680px;
+        font-size: 11px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 13px 12px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      th {
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+        color: #71869b;
+        background: rgba(255, 255, 255, 0.025);
+      }
+      td {
+        color: #c8d6e4;
+      }
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.025);
+      }
+      .chosen td {
+        color: #dffaff;
+        font-weight: 700;
+        background: rgba(56, 217, 255, 0.045);
+      }
+      .chosen td:first-child {
+        color: var(--cyan);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      footer {
+        margin-top: 18px;
+        padding: 16px 2px;
+        color: #61788d;
+        font-size: 10px;
+        line-height: 1.7;
+        text-align: center;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        color: #9ab2c7;
+      }
+      @media (max-width: 900px) {
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .health {
+          justify-content: flex-start;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 600px) {
+        .wrap {
+          width: min(100% - 20px, 1220px);
+          padding-top: 20px;
+        }
+        .card {
+          padding: 17px;
+          border-radius: 18px;
+        }
+        .fields {
+          grid-template-columns: 1fr;
+        }
+        .tabs {
+          width: 100%;
+        }
+        .tabs button {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <div class="brand">
+            <div class="logo">AI</div>
+            <div>
+              <div class="eyebrow">Machine Learning · Regression</div>
+              <h1>Insurance Cost AI</h1>
+            </div>
+          </div>
+          <p class="sub">
+            Dự đoán chi phí bảo hiểm y tế bằng mô hình Machine Learning. Nhập
+            thông tin bên dưới để nhận kết quả và theo dõi hiệu năng hệ thống.
+          </p>
+        </div>
+        <div class="health" id="health-pills"></div>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <div class="card-head">
+            <h2>Thông tin khách hàng</h2>
+            <span class="card-tag">Input</span>
+          </div>
+          <form id="form">
+            <div class="fields" id="fields"></div>
+            <button class="primary" type="submit" id="btn">
+              ✦ &nbsp; Dự đoán chi phí
+            </button>
+            <div class="error" id="error"></div>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>Kết quả dự đoán</h2>
+            <span class="card-tag">AI Output</span>
+          </div>
+          <div class="result-box">
+            <div id="result-empty" class="result-empty">
+              Chưa có dự đoán.<br />Điền form và nhấn <b>Dự đoán chi phí</b>.
+            </div>
+            <div id="result" hidden>
+              <div class="model-label">Predicted Charges</div>
+              <div class="result-value" id="pred-value">—</div>
+              <p class="meta" id="pred-meta"></p>
+              <p class="meta">
+                Request ID: <span class="rid" id="pred-rid">—</span>
+              </p>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="model-label">Model đang phục vụ</div>
+          <p id="model-blurb" class="model-blurb">Đang tải model-info…</p>
+        </section>
+      </div>
+
+      <div class="tabs">
+        <button class="active" data-tab="metrics">So sánh model</button>
+        <button data-tab="history">Lịch sử dự đoán</button>
+      </div>
+
+      <section class="card" id="panel-metrics">
+        <div class="card-head">
+          <h2>Hiệu năng trên tập test</h2>
+          <span class="card-tag">Metrics</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>MAE</th>
+                <th>RMSE</th>
+                <th>R² Test</th>
+                <th>R² Train</th>
+                <th>Predict</th>
+                <th>Size</th>
+              </tr>
+            </thead>
+            <tbody id="metrics-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="panel-history" hidden>
+        <div class="card-head">
+          <h2>20 lần dự đoán gần nhất</h2>
+          <span class="card-tag">MongoDB</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Thời điểm (Giờ địa phương)</th>
+                <th>Request ID</th>
+                <th>Prediction</th>
+                <th>Model</th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>
+        FE :3000 → BE :8000 → AI Service :8001 · Request ID được truyền xuyên
+        suốt hệ thống · <code>docker compose logs -f</code>
+      </footer>
+    </div>
+
+    <script>
+      const apiBase = (window.APP_CONFIG && window.APP_CONFIG.apiBase) || "";
+      const $ = (id) => document.getElementById(id);
+
+      function newRequestId() {
+        if (crypto.randomUUID) return crypto.randomUUID().replace(/-/g, "");
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
+
+      // Hàm chuyển đổi chuỗi UTC ISO từ MongoDB sang giờ địa phương Việt Nam
+
+      function formatLocalDate(isoStr) {
+        console.group("🕐 DEBUG TIMEZONE");
+
+        console.log("1️⃣ created_at GỐC từ API:");
+        console.log(isoStr);
+        console.log("   typeof:", typeof isoStr);
+
+        if (!isoStr) {
+          console.warn("⚠️ created_at rỗng/null");
+          console.groupEnd();
+          return "";
+        }
+
+        try {
+          // Chuẩn hóa chuỗi
+          let formattedStr = String(isoStr).trim().replace(" ", "T");
+
+          console.log("2️⃣ Sau khi replace space → T:");
+          console.log(formattedStr);
+
+          console.log("3️⃣ Có timezone?");
+          console.log("   endsWith Z:", formattedStr.endsWith("Z"));
+          console.log(
+            "   Có +timezone:",
+            /[+-]\d{2}:\d{2}$/.test(formattedStr),
+          );
+
+          // KHÔNG tự động thêm Z ở bước này
+          const date = new Date(formattedStr);
+
+          console.log("4️⃣ Date object:");
+          console.log(date);
+
+          console.log("5️⃣ date.toString():");
+          console.log(date.toString());
+
+          console.log("6️⃣ date.toISOString():");
+          console.log(
+            isNaN(date.getTime()) ? "INVALID DATE" : date.toISOString(),
+          );
+
+          console.log("7️⃣ Timestamp:");
+          console.log(isNaN(date.getTime()) ? "INVALID DATE" : date.getTime());
+
+          console.log("8️⃣ Giờ local của trình duyệt:");
+          console.log({
+            year: date.getFullYear(),
+            month: date.getMonth() + 1,
+            day: date.getDate(),
+            hour: date.getHours(),
+            minute: date.getMinutes(),
+            second: date.getSeconds(),
+          });
+
+          console.log("9️⃣ Timezone trình duyệt:");
+          console.log(Intl.DateTimeFormat().resolvedOptions());
+
+          console.log("🔟 timezone offset:");
+          console.log("Offset phút:", date.getTimezoneOffset());
+          console.log("Offset giờ:", -date.getTimezoneOffset() / 60);
+
+          const vnDate = date.toLocaleString("vi-VN", {
+            timeZone: "Asia/Ho_Chi_Minh",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+
+          console.log("🇻🇳 1️⃣1️⃣ Giờ Việt Nam:");
+          console.log(vnDate);
+
+          console.groupEnd();
+
+          if (isNaN(date.getTime())) {
+            console.error("❌ INVALID DATE:", isoStr);
+            return isoStr;
+          }
+
+          return vnDate;
+        } catch (e) {
+          console.error("❌ LỖI FORMAT DATE");
+          console.error("Input:", isoStr);
+          console.error("Error:", e);
+
+          console.groupEnd();
+
+          return isoStr;
+        }
+      }
+
+      async function loadHistory() {
+        try {
+          const { data } = await api("/api/history?limit=20");
+          const rows = (data.items || [])
+            .map(
+              (it) => `<tr>
+          <td>${formatLocalDate(it.created_at)}</td>
+          <td class="rid">${(it.request_id || "").slice(0, 12)}</td>
+          <td>$${(it.prediction ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+          <td>${it.model_name || it.model_version || ""}</td>
+        </tr>`,
+            )
+            .join("");
+          $("history-body").innerHTML =
+            rows ||
+            `<tr><td colspan="4" class="muted">Chưa có lịch sử.</td></tr>`;
+        } catch (e) {
+          $("history-body").innerHTML =
+            `<tr><td colspan="4">${e.message}</td></tr>`;
+        }
+      }
+
+      async function api(path, options = {}) {
+        const rid = options.requestId || newRequestId();
+        const res = await fetch(apiBase + path, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Request-ID": rid,
+            ...(options.headers || {}),
+          },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const err = new Error(
+            data.detail || data.error || "HTTP " + res.status,
+          );
+          err.payload = data;
+          err.requestId = data.request_id || rid;
+          throw err;
+        }
+        return { data, requestId: data.request_id || rid };
+      }
+
+      function fieldHtml(spec) {
+        const hint = spec.type === "number" ? ` (${spec.min}–${spec.max})` : "";
+        let control;
+        if (spec.type === "categorical") {
+          const opts = (spec.enum || [])
+            .map((v) => {
+              const sel = v === spec.example ? " selected" : "";
+              return `<option value="${v}"${sel}>${v}</option>`;
+            })
+            .join("");
+          control = `<select id="f-${spec.name}" name="${spec.name}">${opts}</select>`;
+        } else {
+          control = `<input id="f-${spec.name}" name="${spec.name}" type="number"
+      step="${spec.step || 1}" min="${spec.min}" max="${spec.max}"
+      value="${spec.example ?? ""}" required />`;
+        }
+        return `<div>
+    <label for="f-${spec.name}">${spec.name} <span class="hint">${spec.description || ""}${hint}</span></label>
+    ${control}
+  </div>`;
+      }
+
+      async function loadSchemaForm() {
+        const { data } = await api("/api/schema");
+        $("fields").innerHTML = data.features.map(fieldHtml).join("");
+      }
+
+      async function loadModelInfo() {
+        try {
+          const { data } = await api("/api/model-info");
+          const m = data.metrics || {};
+          $("model-blurb").innerHTML =
+            `<strong>${data.model_name}</strong> · v${data.model_version}<br>
+       R² = <strong>${m.R2}</strong> · MAE = ${m.MAE} USD · RMSE = ${m.RMSE} USD<br>
+       <span class="hint">${data.chosen_reason || ""}</span>`;
+          const rows = (data.comparison || [])
+            .map((r) => {
+              const mark = r.chosen ? ' class="chosen"' : "";
+              return `<tr${mark}>
+        <td>${r.model}${r.chosen ? " ★" : ""}</td>
+        <td>${r.MAE}</td><td>${r.RMSE}</td>
+        <td>${r.R2}</td><td>${r.R2_train}</td>
+        <td>${r.predict_ms} ms</td><td>${r.size_kb} KB</td>
+      </tr>`;
+            })
+            .join("");
+          $("metrics-body").innerHTML = rows;
+        } catch (e) {
+          $("model-blurb").textContent =
+            "Không tải được model-info: " + e.message;
+        }
+      }
+
+      async function loadHistory() {
+        try {
+          const { data } = await api("/api/history?limit=20");
+          const rows = (data.items || [])
+            .map(
+              (it) => `<tr>
+      <td>${formatLocalDate(it.created_at)}</td>
+      <td class="rid">${(it.request_id || "").slice(0, 12)}</td>
+      <td>$${(it.prediction ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+      <td>${it.model_name || it.model_version || ""}</td>
+    </tr>`,
+            )
+            .join("");
+          $("history-body").innerHTML =
+            rows ||
+            `<tr><td colspan="4" class="muted">Chưa có lịch sử.</td></tr>`;
+        } catch (e) {
+          $("history-body").innerHTML =
+            `<tr><td colspan="4">${e.message}</td></tr>`;
+        }
+      }
+
+      async function pingHealth() {
+        const box = $("health-pills");
+        const tryOne = async (label, path) => {
+          try {
+            const res = await fetch(path, {
+              headers: { "X-Request-ID": newRequestId() },
+            });
+            const ok = res.ok;
+            const j = await res.json().catch(() => ({}));
+            return `<span class="pill ${ok ? "ok" : "bad"}">${label}: ${ok ? "online :" + (j.port ?? "") : "down"}</span>`;
+          } catch {
+            return `<span class="pill bad">${label}: down</span>`;
+          }
+        };
+        const fe = await tryOne("FE", "/health");
+        box.innerHTML =
+          fe + `<span class="pill">BE/AI: xem /api sau khi dự đoán</span>`;
+      }
+
+      $("form").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        $("error").textContent = "";
+        const btn = $("btn");
+        btn.disabled = true;
+        btn.textContent = "Đang dự đoán…";
+        const features = {};
+        for (const el of $("form").querySelectorAll("input,select")) {
+          features[el.name] =
+            el.type === "number" ? Number(el.value) : el.value;
+        }
+        const rid = newRequestId();
+        try {
+          const { data, requestId } = await api("/api/predict", {
+            method: "POST",
+            body: JSON.stringify({ features }),
+            requestId: rid,
+          });
+          $("result-empty").hidden = true;
+          $("result").hidden = false;
+          $("pred-value").textContent =
+            "$" +
+            Number(data.prediction).toLocaleString(undefined, {
+              maximumFractionDigits: 2,
+            });
+          $("pred-meta").textContent =
+            `${data.model_name} v${data.model_version} · AI ${data.latency_ms} ms · BE ${data.server_latency_ms} ms`;
+          $("pred-rid").textContent = requestId;
+          loadHistory();
+        } catch (e) {
+          $("error").textContent =
+            e.message +
+            (e.requestId ? `  (req=${e.requestId.slice(0, 12)})` : "");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Dự đoán";
+        }
+      });
+
+      document.querySelectorAll(".tabs button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tabs button")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const tab = btn.dataset.tab;
+          $("panel-metrics").hidden = tab !== "metrics";
+          $("panel-history").hidden = tab !== "history";
+          if (tab === "history") loadHistory();
+        });
+      });
+
+      loadSchemaForm().catch((e) => {
+        $("error").textContent = e.message;
+      });
+      loadModelInfo();
+      loadHistory();
+      pingHealth();
+    </script>
+  </body>
+</html>
