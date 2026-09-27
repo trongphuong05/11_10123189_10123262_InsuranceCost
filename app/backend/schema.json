@@ -21,10 +21,7 @@
       "name": "sex",
       "type": "categorical",
       "required": true,
-      "enum": [
-        "female",
-        "male"
-      ],
+      "enum": ["female", "male"],
       "description": "Giới tính",
       "example": "male"
     },
@@ -52,10 +49,7 @@
       "name": "smoker",
       "type": "categorical",
       "required": true,
-      "enum": [
-        "yes",
-        "no"
-      ],
+      "enum": ["yes", "no"],
       "description": "Có hút thuốc hay không",
       "example": "no"
     },
@@ -63,32 +57,12 @@
       "name": "region",
       "type": "categorical",
       "required": true,
-      "enum": [
-        "northeast",
-        "northwest",
-        "southeast",
-        "southwest"
-      ],
+      "enum": ["northeast", "northwest", "southeast", "southwest"],
       "description": "Khu vực sinh sống tại Mỹ",
       "example": "southeast"
     }
   ],
-  "feature_order": [
-    "age",
-    "bmi",
-    "children",
-    "sex",
-    "smoker",
-    "region"
-  ],
-  "numeric_features": [
-    "age",
-    "bmi",
-    "children"
-  ],
-  "categorical_features": [
-    "sex",
-    "smoker",
-    "region"
-  ]
+  "feature_order": ["age", "bmi", "children", "sex", "smoker", "region"],
+  "numeric_features": ["age", "bmi", "children"],
+  "categorical_features": ["sex", "smoker", "region"]
 }
