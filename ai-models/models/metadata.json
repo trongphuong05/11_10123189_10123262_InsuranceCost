@@ -1,0 +1,141 @@
+{
+  "model_name": "random_forest",
+  "model_display_name": "Random Forest",
+  "model_class": "RandomForestRegressor",
+  "model_version": "1.0.0",
+  "task": "regression",
+  "target": "charges",
+  "chosen_reason": "Random Forest có R² test cao nhất và RMSE thấp nhất; khe train–test nhỏ hơn một cây đơn; thời gian dự đoán ~35ms chấp nhận được khi deploy.",
+  "metrics": {
+    "MAE": 2447.55,
+    "MSE": 18708535.03,
+    "RMSE": 4325.34,
+    "R2": 0.8795
+  },
+  "metrics_train": {
+    "MAE": 2142.62,
+    "MSE": 15237134.74,
+    "RMSE": 3903.48,
+    "R2": 0.8944
+  },
+  "comparison": [
+    {
+      "model": "dummy_mean",
+      "MAE": 9593.34,
+      "MSE": 155391443.68,
+      "RMSE": 12465.61,
+      "R2": -0.0009,
+      "MAE_train": 9000.56,
+      "R2_train": 0.0,
+      "train_time_sec": 0.33,
+      "predict_ms": 3.63,
+      "size_kb": 1.6,
+      "chosen": false
+    },
+    {
+      "model": "linear_regression",
+      "MAE": 4181.19,
+      "MSE": 33596915.85,
+      "RMSE": 5796.28,
+      "R2": 0.7836,
+      "MAE_train": 4208.23,
+      "R2_train": 0.7417,
+      "train_time_sec": 0.01,
+      "predict_ms": 4.02,
+      "size_kb": 1.9,
+      "chosen": false
+    },
+    {
+      "model": "decision_tree",
+      "MAE": 2697.77,
+      "MSE": 21093484.0,
+      "RMSE": 4592.76,
+      "R2": 0.8641,
+      "MAE_train": 2567.21,
+      "R2_train": 0.8653,
+      "train_time_sec": 0.02,
+      "predict_ms": 9.81,
+      "size_kb": 2.9,
+      "chosen": false
+    },
+    {
+      "model": "random_forest",
+      "MAE": 2447.55,
+      "MSE": 18708535.03,
+      "RMSE": 4325.34,
+      "R2": 0.8795,
+      "MAE_train": 2142.62,
+      "R2_train": 0.8944,
+      "train_time_sec": 0.45,
+      "predict_ms": 84.88,
+      "size_kb": 500.4,
+      "chosen": true
+    },
+    {
+      "model": "svr",
+      "MAE": 1846.6,
+      "MSE": 23318086.22,
+      "RMSE": 4828.88,
+      "R2": 0.8498,
+      "MAE_train": 1797.78,
+      "R2_train": 0.8407,
+      "train_time_sec": 0.31,
+      "predict_ms": 10.03,
+      "size_kb": 13.3,
+      "chosen": false
+    }
+  ],
+  "hyperparameters": {
+    "dummy_mean": {
+      "strategy": "mean"
+    },
+    "linear_regression": {
+      "fit_intercept": true
+    },
+    "decision_tree": {
+      "best_params": {
+        "model__max_depth": 4,
+        "model__min_samples_leaf": 4
+      },
+      "search": "GridSearchCV cv=5 neg_MAE"
+    },
+    "random_forest": {
+      "best_params": {
+        "model__max_depth": 6,
+        "model__min_samples_leaf": 4,
+        "model__n_estimators": 200
+      },
+      "search": "GridSearchCV cv=3 neg_MAE"
+    },
+    "svr": {
+      "best_params": {
+        "model__C": 10000,
+        "model__epsilon": 100,
+        "model__kernel": "rbf"
+      },
+      "search": "GridSearchCV cv=3 neg_MAE"
+    }
+  },
+  "split": {
+    "test_size": 0.2,
+    "random_state": 42,
+    "train_rows": 1070,
+    "test_rows": 268
+  },
+  "n_samples": 1338,
+  "duplicates_found": 1,
+  "trained_at": "2026-09-24T12:07:30Z",
+  "library_versions": {
+    "scikit-learn": "1.9.1",
+    "numpy": "2.3.4",
+    "pandas": "3.0.6",
+    "joblib": "1.6.0"
+  },
+  "artifact": {
+    "path": "ai-models/models/model.joblib",
+    "contains": "sklearn Pipeline (preprocessor + estimator)",
+    "size_bytes": 512361,
+    "export": "Từ Colab: chạy 03_train.ipynb rồi Files.download('model.joblib') hoặc copy vào ai-models/models/. Docker nạp file này lúc container start."
+  },
+  "predict_ms": 84.88
+}
