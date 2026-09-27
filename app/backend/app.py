@@ -61,16 +61,19 @@ logger = setup_logging()
 
 
 def load_schema(primary_path: str) -> dict[str, Any]:
-    """Thử tải schema từ đường dẫn biến môi trường, nếu không tìm thấy sẽ thử các vị trí dự phòng."""
+    """Tải schema từ primary_path hoặc tìm đồng bộ trong ai-models/models/schema.json."""
+    base_dir = os.path.dirname(__file__)
+    ai_models_schema = os.path.abspath(os.path.join(base_dir, "..", "ai-models", "models", "schema.json"))
+    
     possible_paths = [
         primary_path,
-        os.path.join(os.path.dirname(__file__), "schema.json"),
-        os.path.join(os.path.dirname(__file__), "models", "schema.json"),
+        ai_models_schema,
+        os.path.join(base_dir, "schema.json"),
+        os.path.join(base_dir, "models", "schema.json"),
+        "/app/ai-models/models/schema.json",
         "/app/schema.json",
-        "/app/models/schema.json",
     ]
 
-    # Loại bỏ các đường dẫn trùng lặp nhưng giữ nguyên thứ tự ưu tiên
     seen = set()
     unique_paths = [p for p in possible_paths if p and not (p in seen or seen.add(p))]
 
@@ -79,12 +82,12 @@ def load_schema(primary_path: str) -> dict[str, Any]:
             try:
                 with open(path, encoding="utf-8") as f:
                     data = json.load(f)
-                    logger.info("Đã tải thành công schema từ: %s", path)
+                    logger.info("Đã đồng bộ và tải thành công schema từ: %s", path)
                     return data
             except Exception as err:
                 logger.warning("Không thể đọc file schema tại %s: %s", path, err)
 
-    logger.error("CẢNH BÁO: Không tìm thấy file schema.json ở bất kỳ vị trí nào! Sử dụng schema rỗng.")
+    logger.error("CẢNH BÁO: Không tìm thấy file schema.json hợp lệ! Sử dụng schema mặc định.")
     return {"features": []}
 
 
@@ -140,31 +143,49 @@ def list_history(limit: int = 20) -> list[dict]:
 
 
 def validate_features(features: Any) -> str | None:
+    """Validate cấu trúc dữ liệu đầu vào dựa trên SCHEMA đầy đủ."""
     if not isinstance(features, dict):
-        return "Body phải có object 'features'"
-    names = [f["name"] for f in SCHEMA["features"]]
-    missing = [n for n in names if n not in features]
+        return "Payload 'features' phải là một JSON object"
+        
+    schema_features = SCHEMA.get("features", [])
+    required_names = [f["name"] for f in schema_features if f.get("required", True)]
+    all_names = [f["name"] for f in schema_features]
+
+    # 1. Kiểm tra thiếu trường bắt buộc
+    missing = [n for n in required_names if n not in features]
     if missing:
-        return f"Thiếu trường bắt buộc: {missing}"
-    extra = [k for k in features.keys() if k not in names]
+        return f"Thiếu các trường bắt buộc theo schema: {missing}"
+
+    # 2. Kiểm tra trường lạ không nằm trong schema
+    extra = [k for k in features.keys() if k not in all_names]
     if extra:
-        return f"Trường không nằm trong schema: {extra}"
-    for spec in SCHEMA["features"]:
+        return f"Phát hiện trường không nằm trong schema cho phép: {extra}"
+
+    # 3. Kiểm tra kiểu dữ liệu và giới hạn min/max/enum
+    for spec in schema_features:
         name = spec["name"]
+        if name not in features:
+            continue
+            
         value = features[name]
-        if spec["type"] == "number":
+        spec_type = spec.get("type")
+
+        if spec_type == "number":
             try:
                 num = float(value)
             except (TypeError, ValueError):
-                return f"{name} phải là số"
+                return f"Trường '{name}' phải có kiểu dữ liệu là số (number)"
+
             if spec.get("min") is not None and num < spec["min"]:
-                return f"{name} phải ≥ {spec['min']}"
+                return f"Trường '{name}' (giá trị {num}) phải ≥ {spec['min']}"
             if spec.get("max") is not None and num > spec["max"]:
-                return f"{name} phải ≤ {spec['max']}"
-        elif spec["type"] == "categorical":
+                return f"Trường '{name}' (giá trị {num}) phải ≤ {spec['max']}"
+
+        elif spec_type == "categorical":
             allowed = spec.get("enum") or []
             if str(value) not in allowed:
-                return f"{name} phải thuộc {set(allowed)}"
+                return f"Trường '{name}' phải thuộc danh sách cho phép: {allowed}"
+
     return None
 
 
@@ -209,6 +230,7 @@ def health():
         "uptime_sec": round(time.time() - STARTED_AT, 1),
         "ai_service_url": AI_SERVICE_URL,
         "mongodb": "ok" if mongo_ok else "fallback_memory",
+        "schema_loaded": len(SCHEMA.get("features", [])) > 0,
     }
 
 
