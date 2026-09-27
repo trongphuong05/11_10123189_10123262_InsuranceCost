@@ -1,0 +1,103 @@
+services:
+  ai-service:
+    build:
+      context: ./ai-models
+      dockerfile: Dockerfile
+    container_name: insurance-ai
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - AI_SERVICE_PORT=${AI_SERVICE_PORT:-8001}
+      - MODEL_PATH=/app/models/model.joblib
+      - SCHEMA_PATH=/app/models/schema.json
+      - METADATA_PATH=/app/models/metadata.json
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+  mongodb:
+    image: mongo:7
+    container_name: insurance-mongo
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./app/backend
+      dockerfile: Dockerfile
+    container_name: insurance-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - AI_SERVICE_URL=${AI_SERVICE_URL}
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB=${MONGODB_DB:-insurance}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    depends_on:
+      ai-service:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./app/frontend
+      dockerfile: Dockerfile
+    container_name: insurance-frontend
+    ports:
+      - "3000:80"
+    env_file:
+      - .env
+    environment:
+      - FRONTEND_PORT=80
+      - API_URL=${API_URL}
+      - BACKEND_INTERNAL_URL=${BACKEND_INTERNAL_URL:-http://backend:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mongo_data:
