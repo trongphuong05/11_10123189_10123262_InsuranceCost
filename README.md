@@ -178,12 +178,12 @@ Cập nhật `.env` và README mỗi lần link đổi. Không có IP tĩnh: **l
 
 ## 11. Demo online
 
-| Thành phần         | Địa chỉ hiện tại                                             |
-| ------------------ | ------------------------------------------------------------ |
-| App (FE)           | _(điền sau khi public, ví dụ `https://xxxx.ngrok-free.app`)_ |
-| Backend `/docs`    |                                                              |
-| AI Service `/docs` |                                                              |
-| Cập nhật lúc       | xem `docs/tunnel-changelog.md`                               |
+| Thành phần         | Địa chỉ hiện tại                                  |
+| ------------------ | ------------------------------------------------- |
+| App (FE)           | `https://attitude-runner-grooving.ngrok-free.dev` |
+| Backend `/docs`    |                                                   |
+| AI Service `/docs` |                                                   |
+| Cập nhật lúc       | xem `docs/tunnel-changelog.md`                    |
 
 Smoke test sau khi public:
 
@@ -226,9 +226,9 @@ k6 run docs/k6-predict.js
 
 Ghi kết quả thật vào đây sau khi public (số VU, p50/p95, error rate, ngưỡng chịu tải).
 
-| Ngày | VU × thời lượng | req/s | p50 | p95 | Error | Ghi chú                   |
-| ---- | --------------- | ----- | --- | --- | ----- | ------------------------- |
-|      |                 |       |     |     |       | chưa chạy trên URL public |
+| Ngày       | VU × thời lượng | req/s | p50        | p95        | Error | Ghi chú                                 |
+| ---------- | --------------- | ----- | ---------- | ---------- | ----- | --------------------------------------- |
+| 02/10/2026 | 15 VU × 61.33s  | 18.88 | 1038.92 ms | 1276.46 ms | 0.00% | PASS (đạt kỳ vọng p95 < 2s, error < 1%) |
 
 ---
 
